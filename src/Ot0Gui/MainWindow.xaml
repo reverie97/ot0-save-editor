@@ -1,0 +1,185 @@
+<Window x:Class="Ot0Gui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding Title}" Width="1040" Height="640" MinWidth="760" MinHeight="460"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenFileCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="F5" Command="{Binding ReloadCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel x:Name="Root" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open..." InputGestureText="Ctrl+O" Command="{Binding OpenFileCommand}" />
+                <MenuItem Header="_Reload" InputGestureText="F5" Command="{Binding ReloadCommand}" />
+                <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="Exit_Click" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="Max _money" Command="{Binding MaxMoneyCommand}" />
+                <MenuItem Header="Set party _JP" Command="{Binding PartyJpCommand}" />
+                <MenuItem Header="Ma_x party bonuses" Command="{Binding PartyMaxCommand}" />
+                <MenuItem Header="_Clear party bonuses" Command="{Binding PartyClearCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Check save" Command="{Binding VerifyCommand}" />
+                <MenuItem Header="_Export JSON..." Command="{Binding ExportCommand}" />
+                <MenuItem Header="Open _backups folder" Command="{Binding BackupsCommand}" />
+                <Separator />
+                <MenuItem Header="_Oodle DLL..." Command="{Binding OodleCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Command="{Binding AboutCommand}" />
+            </MenuItem>
+        </Menu>
+
+        <StatusBar DockPanel.Dock="Bottom">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Status}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                    <Setter Property="Foreground" Value="Firebrick" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem Content="{Binding FileName}" />
+            <Separator />
+            <StatusBarItem Content="Modified" Visibility="{Binding Dirty, Converter={StaticResource ShowIf}}" />
+            <StatusBarItem Visibility="{Binding GameRunning, Converter={StaticResource ShowIf}}">
+                <TextBlock Text="Game is running. Close it before saving." Foreground="Firebrick" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <GroupBox DockPanel.Dock="Top" Header="Save" Margin="8,6,8,0" Padding="4">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Content="_Slot:" Target="{Binding ElementName=SlotBox}" />
+                <ComboBox x:Name="SlotBox" Grid.Column="1" VerticalAlignment="Center"
+                          ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}" DisplayMemberPath="Display" />
+                <Label Grid.Column="2" Content="_Money:" Target="{Binding ElementName=MoneyBox}" Margin="16,0,0,0" />
+                <TextBox x:Name="MoneyBox" Grid.Column="3" Width="90" VerticalAlignment="Center" IsEnabled="{Binding Loaded}"
+                         Text="{Binding Money, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Money" />
+                <Button Grid.Column="4" Content="Max" Width="44" Margin="4,0,0,0" VerticalAlignment="Center" Command="{Binding MaxMoneyCommand}" />
+                <Label Grid.Column="5" Content="Play time:" Margin="16,0,0,0" />
+                <Label Grid.Column="6" Content="{Binding PlayTime}" />
+                <Label Grid.Column="7" Content="Protagonist:" Margin="12,0,0,0" />
+                <Label Grid.Column="8" Content="{Binding Protagonist}" />
+            </Grid>
+        </GroupBox>
+
+        <TabControl x:Name="Tabs" Margin="8" IsEnabled="{Binding Loaded}">
+
+            <TabItem Header="Party">
+                <DockPanel Margin="4">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                        <Label Content="Party _JP:" Target="{Binding ElementName=PartyJpBox}" />
+                        <TextBox x:Name="PartyJpBox" Width="70" VerticalAlignment="Center"
+                                 Text="{Binding PartyJp, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Party JP" />
+                        <Button Content="Set" Width="50" Margin="4,0,0,0" VerticalAlignment="Center" Command="{Binding PartyJpCommand}" />
+                        <Button Content="Max bonuses" Padding="8,1" Margin="16,0,0,0" VerticalAlignment="Center" Command="{Binding PartyMaxCommand}" />
+                        <Button Content="Clear bonuses" Padding="8,1" Margin="4,0,0,0" VerticalAlignment="Center" Command="{Binding PartyClearCommand}" />
+                        <Label Content="(applies to everyone in the active party)" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                    </StackPanel>
+
+                    <TextBlock DockPanel.Dock="Bottom" Margin="2,6,0,0" TextWrapping="Wrap"
+                               Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                               Text="The + columns are permanent bonuses (what stat nuts add). In game, stats show 999 at most and the HP bonus stops at 3000." />
+
+                    <DataGrid x:Name="PartyGrid" ItemsSource="{Binding Characters}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False"
+                              SelectionMode="Single" HeadersVisibility="Column" GridLinesVisibility="All"
+                              HorizontalGridLinesBrush="#DDDDDD" VerticalGridLinesBrush="#DDDDDD">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="90" />
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="52" />
+                            <DataGridTextColumn Header="Lv" Binding="{Binding Level}" IsReadOnly="True" Width="34" />
+                            <DataGridCheckBoxColumn Header="Party" Binding="{Binding InParty, Mode=OneWay}" IsReadOnly="True" Width="42" />
+                            <DataGridTextColumn Header="JP" Binding="{Binding Jp, UpdateSourceTrigger=PropertyChanged}" Width="62" />
+                            <DataGridTextColumn Header="HP+" Binding="{Binding Stats[0].Value, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <DataGridTextColumn Header="SP+" Binding="{Binding Stats[1].Value, UpdateSourceTrigger=PropertyChanged}" Width="44" />
+                            <DataGridTextColumn Header="P.Atk+" Binding="{Binding Stats[2].Value, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <DataGridTextColumn Header="P.Def+" Binding="{Binding Stats[3].Value, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <DataGridTextColumn Header="E.Atk+" Binding="{Binding Stats[4].Value, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <DataGridTextColumn Header="E.Def+" Binding="{Binding Stats[5].Value, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <DataGridTextColumn Header="Spd+" Binding="{Binding Stats[6].Value, UpdateSourceTrigger=PropertyChanged}" Width="44" />
+                            <DataGridTextColumn Header="Crit+" Binding="{Binding Stats[7].Value, UpdateSourceTrigger=PropertyChanged}" Width="44" />
+                            <DataGridTextColumn Header="Acc+" Binding="{Binding Stats[8].Value, UpdateSourceTrigger=PropertyChanged}" Width="44" />
+                            <DataGridTextColumn Header="Eva+" Binding="{Binding Stats[9].Value, UpdateSourceTrigger=PropertyChanged}" Width="*" MinWidth="44" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Items">
+                <DockPanel Margin="4">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,4">
+                        <Label Content="_Find:" Target="{Binding ElementName=FindBox}" />
+                        <TextBox x:Name="FindBox" Width="160" VerticalAlignment="Center"
+                                 Text="{Binding ItemFilter, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Search items" />
+                        <Label Content="_Type:" Target="{Binding ElementName=TypeBox}" Margin="12,0,0,0" />
+                        <ComboBox x:Name="TypeBox" Width="130" VerticalAlignment="Center"
+                                  ItemsSource="{Binding ItemTypes}" SelectedItem="{Binding TypeFilter}" AutomationProperties.Name="Item type" />
+                        <CheckBox Content="Show items I _don't have" Margin="16,0,0,0" VerticalAlignment="Center"
+                                  IsChecked="{Binding ShowAllItems}" />
+                        <Label Content="{Binding ItemSummary}" Margin="12,0,0,0" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                    </StackPanel>
+
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                        <Label Content="Set _item:" Target="{Binding ElementName=NewIdBox}" />
+                        <TextBox x:Name="NewIdBox" Width="160" VerticalAlignment="Center"
+                                 Text="{Binding NewItemId, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Item ID or name" />
+                        <Label Content="_Count:" Target="{Binding ElementName=NewCountBox}" />
+                        <TextBox x:Name="NewCountBox" Width="44" VerticalAlignment="Center"
+                                 Text="{Binding NewItemCount, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Item count" />
+                        <Button Content="Apply" Width="60" Margin="6,0,0,0" VerticalAlignment="Center" Command="{Binding AddItemCommand}" />
+                        <Label Content="(name or ID; adds the item if you don't have it)" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding ItemsView}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False"
+                              SelectionMode="Single" HeadersVisibility="Column" GridLinesVisibility="All"
+                              HorizontalGridLinesBrush="#DDDDDD" VerticalGridLinesBrush="#DDDDDD"
+                              EnableRowVirtualization="True">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Owned}" Value="False">
+                                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="64" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" IsReadOnly="True" Width="110" />
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" IsReadOnly="True" Width="220" />
+                            <DataGridTextColumn Header="Count" Binding="{Binding Count, UpdateSourceTrigger=PropertyChanged}" Width="52" />
+                            <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" IsReadOnly="True" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

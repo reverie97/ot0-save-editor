@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+*.user
+
+# never commit saves or the Oodle DLL
+*.sav
+*.gvas
+oo2core*.dll
+
+# early prototype scripts, kept locally only
+old-scripts/
