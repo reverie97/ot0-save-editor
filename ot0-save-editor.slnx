@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Ot0Edit/Ot0Edit.csproj" />
+    <Project Path="src/Ot0Gui/Ot0Gui.csproj" />
+    <Project Path="src/Ot0Save/Ot0Save.csproj" />
+  </Folder>
+</Solution>
